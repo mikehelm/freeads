@@ -4,6 +4,7 @@ import { StepIndicator } from './StepIndicator';
 import { WalletStep } from './affiliate/WalletStep';
 import { EmailForm } from './affiliate/EmailForm';
 import { SuccessMessage } from './affiliate/SuccessMessage';
+import { config } from '../config';
 
 const STEPS = [
   { number: 1, label: 'Connect' },
@@ -68,7 +69,7 @@ export function AffiliateForm() {
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/user-details', {
+      const response = await fetch(`${config.apiBaseUrl}/api/user-details`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

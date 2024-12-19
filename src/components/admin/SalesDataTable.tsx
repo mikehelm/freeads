@@ -5,6 +5,7 @@ import { WalletAddress } from '../WalletAddress';
 import Papa from 'papaparse';
 import { Search, ArrowLeft, Save } from 'lucide-react';
 import { Input } from '../Input';
+import { config } from '../../config';
 
 interface NodeData {
   nick_name: string;
@@ -204,7 +205,7 @@ export function SalesDataTable({ data, initialSearchTerm = '' }: Props) {
 
       console.log('Sending admin updates:', updates);
 
-      const response = await fetch('/api/admin/update-user', {
+      const response = await fetch(`${config.apiBaseUrl}/api/admin/update-user`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
