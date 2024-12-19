@@ -1,0 +1,89 @@
+import React, { useState, useEffect } from 'react';
+import { useWallet } from '../../hooks/useWallet';
+import { AffiliateForm } from '../AffiliateForm';
+import Papa from 'papaparse';
+import { logger } from '../../utils/logger';
+
+interface NodeData {
+  wallet: string;
+  purchased: string;
+  sold: string;
+}
+
+export function HeroSection() {
+  const { address } = useWallet();
+  const [ownedNodes, setOwnedNodes] = useState(0);
+  const [soldNodes, setSoldNodes] = useState(0);
+
+  useEffect(() => {
+    const fetchNodeData = async () => {
+      if (!address) return;
+
+      try {
+        const response = await fetch('/data/nodes/nodes.csv');
+        const csvText = await response.text();
+        
+        Papa.parse(csvText, {
+          header: true,
+          complete: (results) => {
+            const data = results.data as NodeData[];
+            const userRow = data.find(row => 
+              row.wallet?.toLowerCase() === address?.toLowerCase()
+            );
+
+            if (userRow) {
+              setOwnedNodes(parseInt(userRow.purchased) || 0);
+              setSoldNodes(parseInt(userRow.sold) || 0);
+              logger.log('info', 'Node data loaded', { owned: userRow.purchased, sold: userRow.sold });
+            }
+          },
+          error: (error) => {
+            logger.log('error', 'Failed to parse CSV', error);
+          }
+        });
+      } catch (error) {
+        logger.log('error', 'Failed to fetch node data', error);
+      }
+    };
+
+    fetchNodeData();
+  }, [address]);
+
+  return (
+    <div id="free-ads" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-12 py-16">
+        <div className="flex-1 text-center lg:text-left">
+          {!address ? (
+            <>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
+                <span className="animate-gradient-text">Get Your Free</span>
+                <br />
+                Ad Credits
+              </h1>
+              <p className="text-text-muted text-lg sm:text-xl max-w-2xl mb-8">
+                Connect your wallet to view your eligible ad credits
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
+                <span className="animate-gradient-text">Congratulations</span>
+                <br />
+                Node Owner
+              </h1>
+              <p className="text-text-muted text-lg sm:text-xl max-w-2xl mb-8">
+                You own {ownedNodes} nodes and have sold {soldNodes} nodes
+              </p>
+            </>
+          )}
+        </div>
+
+        <div className="flex-1 max-w-md w-full">
+          <div className="floating-card">
+            <AffiliateForm />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

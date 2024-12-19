@@ -1,0 +1,132 @@
+import React, { useState, useEffect } from 'react';
+import { useWallet } from '../../hooks/useWallet';
+import { AffiliateForm } from '../AffiliateForm';
+import Papa from 'papaparse';
+import { logger } from '../../utils/logger';
+
+interface NodeData {
+  wallet: string;
+  purchased: string;
+  sold: string;
+}
+
+const OWNED_NODE_CREDIT = 1000; // $1000 per owned node
+const SOLD_NODE_CREDIT = 500;   // $500 per sold node
+
+export function HeroSection() {
+  const { address } = useWallet();
+  const [ownedNodes, setOwnedNodes] = useState(0);
+  const [soldNodes, setSoldNodes] = useState(0);
+  const [totalCredits, setTotalCredits] = useState(0);
+
+  useEffect(() => {
+    const fetchNodeData = async () => {
+      if (!address) return;
+
+      try {
+        const response = await fetch('/data/nodes/nodes.csv');
+        const csvText = await response.text();
+        
+        Papa.parse(csvText, {
+          header: true,
+          complete: (results) => {
+            const data = results.data as NodeData[];
+            const userRow = data.find(row => 
+              row.wallet?.toLowerCase() === address?.toLowerCase()
+            );
+
+            if (userRow) {
+              const owned = parseInt(userRow.purchased) || 0;
+              const sold = parseInt(userRow.sold) || 0;
+              
+              setOwnedNodes(owned);
+              setSoldNodes(sold);
+              
+              // Calculate total credits
+              const ownedCredits = owned * OWNED_NODE_CREDIT;
+              const soldCredits = sold * SOLD_NODE_CREDIT;
+              const total = ownedCredits + soldCredits;
+              
+              setTotalCredits(total);
+              
+              logger.log('info', 'Node data loaded', { 
+                owned, 
+                sold, 
+                ownedCredits,
+                soldCredits,
+                totalCredits: total 
+              });
+            }
+          },
+          error: (error) => {
+            logger.log('error', 'Failed to parse CSV', error);
+          }
+        });
+      } catch (error) {
+        logger.log('error', 'Failed to fetch node data', error);
+      }
+    };
+
+    fetchNodeData();
+  }, [address]);
+
+  const formatCredits = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
+  const getNodeText = (count: number, type: string) => {
+    return `${count} ${type}${count === 1 ? '' : 's'}`;
+  };
+
+  return (
+    <div id="free-ads" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-12 py-16">
+        <div className="flex-1 text-center lg:text-left lg:pl-8 xl:pl-0">
+          {!address ? (
+            <>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
+                <span className="animate-gradient-text">Get Your Free</span>
+                <br />
+                Ad Credits
+              </h1>
+              <p className="text-text-muted text-lg sm:text-xl max-w-2xl mb-8">
+                Connect your wallet to view your eligible ad credits
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-text-muted text-lg sm:text-xl mb-4">
+                You own {getNodeText(ownedNodes, 'node')} and have sold {getNodeText(soldNodes, 'node')}
+              </p>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
+                <span className="animate-gradient-text">Congratulations</span>
+                <br />
+                Node Owner
+              </h1>
+              <div className="space-y-4">
+                <p className="text-2xl font-bold text-accent-orange">
+                  Total Ad Credits: {formatCredits(totalCredits)}
+                </p>
+                <div className="text-sm text-text-muted space-y-1">
+                  <p>• Owned nodes: {ownedNodes} × {formatCredits(OWNED_NODE_CREDIT)} per node</p>
+                  <p>• Sold nodes: {soldNodes} × {formatCredits(SOLD_NODE_CREDIT)} per node</p>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="flex-1 max-w-md w-full">
+          <div className="floating-card">
+            <AffiliateForm />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

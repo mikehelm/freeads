@@ -1,0 +1,7 @@
+timestamp,wallet,field,old_value,new_value
+2024-12-17T12:03:05.978Z,0xbf885d3e646168c35df2aa9f516d3e9480b57eb4,update,{"first_name":"Mike","last_name":"Helm","email":"mikehelm@gmail.com"}
+2024-12-17T12:03:43.154Z,0xbf885d3e646168c35df2aa9f516d3e9480b57eb4,update,{"first_name":"Mike","last_name":"Helm","email":"mikehelm@gmail.com"}
+2024-12-17T12:03:53.190Z,0xbf885d3e646168c35df2aa9f516d3e9480b57eb4,update,{"first_name":"Mike","last_name":"Helm","email":"mikehelm2@gmail.com"}
+2024-12-17T12:04:04.652Z,0xbf885d3e646168c35df2aa9f516d3e9480b57eb4,update,{"first_name":"Michael","last_name":"Helm","email":"mikehelm@gmail.com"}
+2024-12-17T12:07:51.068Z,0xbf885d3e646168c35df2aa9f516d3e9480b57eb4,update,{"first_name":"Michael","last_name":"Helm","email":"mikehelm@gmail.com"}
+2024-12-17T12:08:02.110Z,0xbf885d3e646168c35df2aa9f516d3e9480b57eb4,update,{"first_name":"Michael","last_name":"Helm","email":"mikehelm@gmail.com"}

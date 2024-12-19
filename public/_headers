@@ -1,0 +1,6 @@
+/*
+  Content-Security-Policy: default-src 'self' https://api.etherscan.io; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://api.etherscan.io https://*.netlify.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.etherscan.io wss: https: https://*.netlify.app; frame-ancestors 'none'; worker-src 'self' blob:;
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()
