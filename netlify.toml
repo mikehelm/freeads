@@ -5,8 +5,8 @@
 
 [dev]
   command = "npm run dev:all"
-  targetPort = 4000
-  port = 8888
+  targetPort = 4001
+  port = 4000
 
 [[redirects]]
   from = "/api/*"

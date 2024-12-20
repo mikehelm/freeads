@@ -16,9 +16,8 @@ interface WalletDataResponse {
   data: WalletData;
 }
 
-const API_BASE_URL = import.meta.env.DEV 
-  ? 'http://localhost:8888/.netlify/functions'
-  : 'https://getfreeads.netlify.app/.netlify/functions';
+// In development, we use the relative path since it's proxied by Vite
+const API_BASE_URL = '/.netlify/functions';
 
 export const fetchWalletData = async (address: string): Promise<WalletData> => {
   try {
@@ -27,7 +26,12 @@ export const fetchWalletData = async (address: string): Promise<WalletData> => {
     
     if (!response.ok) {
       const error = await response.text();
-      throw new Error(error || 'Failed to fetch wallet data');
+      logger.log('error', 'Failed to fetch wallet data', { 
+        status: response.status, 
+        statusText: response.statusText,
+        error 
+      });
+      throw new Error(error || `Failed to fetch wallet data: ${response.status} ${response.statusText}`);
     }
 
     const data: WalletDataResponse = await response.json();
@@ -52,7 +56,12 @@ export const submitEmail = async (email: string, address: string): Promise<void>
 
     if (!response.ok) {
       const error = await response.text();
-      throw new Error(error || 'Failed to submit email');
+      logger.log('error', 'Failed to submit email', { 
+        status: response.status, 
+        statusText: response.statusText,
+        error 
+      });
+      throw new Error(error || `Failed to submit email: ${response.status} ${response.statusText}`);
     }
 
     logger.log('success', 'Email submitted successfully');
