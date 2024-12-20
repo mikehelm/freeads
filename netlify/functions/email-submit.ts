@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions';
-import { getStore } from '@netlify/blobs';
+import { getKVStore } from '@netlify/blobs';
 
 interface EmailSubmission {
   email: string;
@@ -63,19 +63,15 @@ const handler: Handler = async (event) => {
       throw new Error('Invalid wallet address format');
     }
 
-    // Store the submission
-    const store = getStore('user-details', {
-      siteID: '1ceab40b-f6e1-4dcc-ab15-21f2af2fd7e2',
-      token: process.env.NETLIFY_ACCESS_TOKEN || ''
-    });
-
+    // Store the submission in KV store
+    const store = getKVStore();
     try {
-      await store.set(submission.address.toLowerCase(), JSON.stringify({
+      await store.set(`user:${submission.address.toLowerCase()}`, JSON.stringify({
         email: submission.email,
         timestamp: new Date().toISOString()
       }));
     } catch (err) {
-      console.error('Error writing to store:', err);
+      console.error('Error writing to KV store:', err);
       throw new Error('Failed to save email. Please try again.');
     }
 
