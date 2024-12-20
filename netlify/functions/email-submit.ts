@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions';
-import { getKVStore } from '@netlify/blobs';
+import { getStore } from '@netlify/blobs';
 
 interface EmailSubmission {
   email: string;
@@ -64,7 +64,7 @@ const handler: Handler = async (event) => {
     }
 
     // Store the submission in KV store
-    const store = getKVStore();
+    const store = getStore('user-details');
     try {
       await store.set(`user:${submission.address.toLowerCase()}`, JSON.stringify({
         email: submission.email,

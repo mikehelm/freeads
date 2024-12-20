@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions';
-import { getKVStore } from '@netlify/blobs';
+import { getStore } from '@netlify/blobs';
 
 interface WalletData {
   id: string;
@@ -79,7 +79,7 @@ const handler: Handler = async (event) => {
     const nodeData = NODE_DATA[address] || { owned: 0, sold: 0 };
 
     // Get user details from KV store
-    const store = getKVStore();
+    const store = getStore('user-details');
     let userDetails = {};
     try {
       const userDetailsStr = await store.get(`user:${address}`);
