@@ -50,7 +50,7 @@ export function useWalletData(address: string | null): UseWalletDataResult {
     setError(null);
 
     try {
-      const response = await fetch(`/api/wallet/${address}/data`);
+      const response = await fetch(`${config.apiBaseUrl}/functions/wallet-data/${address}`);
       const result = await response.json();
 
       if (!response.ok) {
