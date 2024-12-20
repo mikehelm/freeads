@@ -9,11 +9,11 @@ interface WalletStepProps {
 }
 
 export function WalletStep({ address }: WalletStepProps) {
-  const { connectWallet, isConnecting } = useWallet();
+  const { connect, isConnecting } = useWallet();
 
   const handleConnect = async () => {
     console.log('Initiating MetaMask connection...');
-    await connectWallet();
+    await connect();
   };
 
   if (!address) {
@@ -33,7 +33,7 @@ export function WalletStep({ address }: WalletStepProps) {
             </>
           ) : (
             <>
-              <Wallet className="w-5 h-5 mr-2" />
+              <Wallet className="mr-2 h-4 w-4" />
               Connect Wallet
             </>
           )}
@@ -43,10 +43,8 @@ export function WalletStep({ address }: WalletStepProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="bg-white/5 border-2 border-white/10 rounded-lg px-6 py-4">
-        <WalletDisplay />
-      </div>
+    <div className="w-full">
+      <WalletDisplay address={address} />
     </div>
   );
 }

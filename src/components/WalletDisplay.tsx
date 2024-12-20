@@ -4,19 +4,18 @@ import { formatAddress } from '../utils/wallet';
 import { Loader2 } from 'lucide-react';
 
 interface WalletDisplayProps {
+  address: string;
   className?: string;
 }
 
-export function WalletDisplay({ className = '' }: WalletDisplayProps) {
-  const { address, disconnectWallet } = useWallet();
+export function WalletDisplay({ address, className = '' }: WalletDisplayProps) {
+  const { disconnect } = useWallet();
   const [isDisconnecting, setIsDisconnecting] = React.useState(false);
-
-  if (!address) return null;
 
   const handleDisconnect = async () => {
     setIsDisconnecting(true);
     try {
-      await disconnectWallet();
+      await disconnect();
     } finally {
       setIsDisconnecting(false);
     }

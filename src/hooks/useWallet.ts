@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { connectWallet, disconnectWallet } from '../utils/wallet';
+import { fetchWalletData } from '../api/wallet';
 import { logger } from '../utils/logger';
 
 interface UseWalletResult {
@@ -32,11 +33,18 @@ export function useWallet(): UseWalletResult {
 
     // Check if already connected
     window.ethereum.request({ method: 'eth_accounts' })
-      .then(accounts => {
+      .then(async accounts => {
         if (accounts && accounts.length > 0) {
           const addr = accounts[0].toLowerCase();
           setAddress(addr);
           logger.log('info', 'Found existing connection', { address: addr });
+          
+          // Fetch wallet data for existing connection
+          try {
+            await fetchWalletData(addr);
+          } catch (err) {
+            logger.log('error', 'Error fetching wallet data for existing connection', err);
+          }
         }
       })
       .catch(err => {
@@ -44,14 +52,22 @@ export function useWallet(): UseWalletResult {
       });
 
     // Listen for account changes
-    const handleAccountsChanged = (accounts: string[]) => {
+    const handleAccountsChanged = async (accounts: string[]) => {
       logger.log('info', 'Accounts changed', { accounts });
       if (accounts.length === 0) {
         setAddress(null);
         setError('Wallet disconnected');
       } else {
-        setAddress(accounts[0].toLowerCase());
+        const addr = accounts[0].toLowerCase();
+        setAddress(addr);
         setError(null);
+        
+        // Fetch wallet data when account changes
+        try {
+          await fetchWalletData(addr);
+        } catch (err) {
+          logger.log('error', 'Error fetching wallet data after account change', err);
+        }
       }
     };
 
@@ -83,7 +99,14 @@ export function useWallet(): UseWalletResult {
         logger.log('error', 'Connection error', { error: result.error });
       } else if (result.address) {
         setAddress(result.address);
-        logger.log('success', 'Wallet connected successfully', { address: result.address });
+        logger.log('success', 'Wallet connected', { address: result.address });
+        
+        // Fetch wallet data after successful connection
+        try {
+          await fetchWalletData(result.address);
+        } catch (err) {
+          logger.log('error', 'Error fetching wallet data after connection', err);
+        }
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error connecting wallet';
@@ -100,7 +123,7 @@ export function useWallet(): UseWalletResult {
       await disconnectWallet();
       setAddress(null);
       setError(null);
-      logger.log('success', 'Wallet disconnected successfully');
+      logger.log('success', 'Wallet disconnected');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error disconnecting wallet';
       setError(errorMessage);
@@ -113,6 +136,6 @@ export function useWallet(): UseWalletResult {
     error,
     connect,
     disconnect,
-    isConnecting
+    isConnecting,
   };
 }
