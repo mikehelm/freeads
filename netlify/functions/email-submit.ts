@@ -64,7 +64,12 @@ const handler: Handler = async (event) => {
     }
 
     // Store the submission in KV store
-    const store = getStore('user-details');
+    const store = getStore({
+      name: 'user-details',
+      siteID: '1ceab40b-f6e1-4dcc-ab15-21f2af2fd7e2',
+      token: process.env.NETLIFY_ACCESS_TOKEN || ''
+    });
+    
     try {
       await store.set(`user:${submission.address.toLowerCase()}`, JSON.stringify({
         email: submission.email,

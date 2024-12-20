@@ -79,7 +79,12 @@ const handler: Handler = async (event) => {
     const nodeData = NODE_DATA[address] || { owned: 0, sold: 0 };
 
     // Get user details from KV store
-    const store = getStore('user-details');
+    const store = getStore({
+      name: 'user-details',
+      siteID: '1ceab40b-f6e1-4dcc-ab15-21f2af2fd7e2',
+      token: process.env.NETLIFY_ACCESS_TOKEN || ''
+    });
+    
     let userDetails = {};
     try {
       const userDetailsStr = await store.get(`user:${address}`);
