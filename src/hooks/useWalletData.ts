@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { logger } from '../utils/logger';
+import { config } from '../config';
 
 interface WalletData {
   id: string;
@@ -44,7 +45,10 @@ export function useWalletData(address: string | null): UseWalletDataResult {
   const [error, setError] = useState<Error | null>(null);
 
   const fetchData = async () => {
-    if (!address) return;
+    if (!address) {
+      setData(null);
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -57,23 +61,30 @@ export function useWalletData(address: string | null): UseWalletDataResult {
         throw new Error(result.error || 'Failed to fetch wallet data');
       }
 
-      if (result.code !== 200 || result.status !== 1) {
-        throw new Error('Invalid API response');
+      if (!result.data) {
+        throw new Error('No data received from API');
+      }
+
+      // Validate required fields
+      const requiredFields = ['id', 'address', 'nodes', 'email', 'level'];
+      for (const field of requiredFields) {
+        if (!(field in result.data)) {
+          throw new Error(`Missing required field: ${field}`);
+        }
       }
 
       setData(result.data);
     } catch (err) {
       logger.log('error', 'Error fetching wallet data:', err);
       setError(err instanceof Error ? err : new Error('Unknown error'));
+      setData(null);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (address) {
-      fetchData();
-    }
+    fetchData();
   }, [address]);
 
   return {

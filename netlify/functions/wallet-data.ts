@@ -1,5 +1,4 @@
 import { Handler } from '@netlify/functions';
-import { getStore } from '@netlify/blobs';
 
 interface WalletData {
   id: string;
@@ -13,19 +12,21 @@ interface WalletData {
   };
 }
 
-const WALLET_DATA = {
-  // Add your wallet addresses and their corresponding node counts here
-  '0xbf885d3e646168c35df2aa9f516d3e9480b57eb4': { owned: 1, sold: 13 },
-  '0x14a0469902aec7e5d80013f545976714377f2929': { owned: 1, sold: 13 },
-  // Add more wallets as needed
-};
+const ALLOWED_ORIGINS = [
+  'https://getfreeads.netlify.app',
+  'http://localhost:4001',
+  'http://localhost:8888'
+];
 
 const handler: Handler = async (event) => {
-  // Enable CORS
+  const origin = event.headers.origin || '';
+  
+  // Enable CORS for specific origins
   const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Max-Age': '86400',
   };
 
   // Handle preflight requests
@@ -56,23 +57,24 @@ const handler: Handler = async (event) => {
       };
     }
 
-    // Get wallet data from our mapping
-    const walletInfo = WALLET_DATA[address] || { owned: 0, sold: 0 };
+    if (!/^0x[a-f0-9]{40}$/i.test(address)) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Invalid wallet address format' }),
+      };
+    }
 
-    // Get user details from KV store
-    const store = getStore('user-details');
-    const userDetailsStr = await store.get(address);
-    const userDetails = userDetailsStr ? JSON.parse(userDetailsStr as string) : {};
-
-    const responseData: WalletData = {
-      id: address,
-      address: address,
-      nodes: walletInfo.owned,
-      email: userDetails.email || '',
+    // Mock data for testing - replace with actual API call
+    const mockData: WalletData = {
+      id: '1',
+      address: address.toLowerCase(),
+      nodes: 1,
+      email: '',
       level: 1,
       flipit: {
-        nodes: walletInfo.sold,
-        email: userDetails.email || ''
+        nodes: 13,
+        email: ''
       }
     };
 
@@ -80,9 +82,7 @@ const handler: Handler = async (event) => {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        code: 200,
-        status: 1,
-        data: responseData
+        data: mockData
       }),
     };
   } catch (error) {
