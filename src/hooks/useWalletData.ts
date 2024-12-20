@@ -1,18 +1,7 @@
 import { useState, useEffect } from 'react';
 import { logger } from '../utils/logger';
 import { config } from '../config';
-
-interface WalletData {
-  id: string;
-  address: string;
-  nodes: number;
-  email: string;
-  level: number;
-  flipit?: {
-    nodes: number;
-    email: string;
-  };
-}
+import { WalletData, WalletDataResponse } from '../types/ethereum';
 
 interface UseWalletDataResult {
   data: WalletData | null;
@@ -39,7 +28,7 @@ export function useWalletData(address: string | null): UseWalletDataResult {
 
     try {
       const response = await fetch(`${config.apiBaseUrl}/functions/wallet-data/${address}`);
-      const result = await response.json();
+      const result = await response.json() as WalletDataResponse;
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to fetch wallet data');
@@ -49,12 +38,17 @@ export function useWalletData(address: string | null): UseWalletDataResult {
         throw new Error('No data received from API');
       }
 
-      // Validate required fields
-      const requiredFields = ['id', 'address', 'nodes', 'email', 'level'];
+      // Type guard for required fields
+      const requiredFields: Array<keyof WalletData> = ['id', 'address', 'nodes', 'email', 'level'];
       for (const field of requiredFields) {
         if (!(field in result.data)) {
           throw new Error(`Missing required field: ${field}`);
         }
+      }
+
+      // Additional type checking for nested flipit data
+      if (result.data.flipit && typeof result.data.flipit.nodes !== 'number') {
+        throw new Error('Invalid flipit nodes data');
       }
 
       setData(result.data);
@@ -71,9 +65,9 @@ export function useWalletData(address: string | null): UseWalletDataResult {
     fetchData();
   }, [address]);
 
-  // Calculate owned and sold nodes
-  const ownedNodes = data?.nodes || 0;
-  const soldNodes = data?.flipit?.nodes || 0;
+  // Safe access to node counts with type checking
+  const ownedNodes = data?.nodes ?? 0;
+  const soldNodes = data?.flipit?.nodes ?? 0;
 
   return {
     data,
