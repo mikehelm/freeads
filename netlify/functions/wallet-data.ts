@@ -34,6 +34,7 @@ const handler: Handler = async (event) => {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Max-Age': '86400',
+    'Content-Type': 'application/json'
   };
 
   // Handle preflight requests
@@ -54,7 +55,9 @@ const handler: Handler = async (event) => {
   }
 
   try {
-    const address = event.path.split('/').pop()?.toLowerCase();
+    // Extract address from path parameters
+    const pathParts = event.path.split('/');
+    const address = pathParts[pathParts.length - 1]?.toLowerCase();
     
     if (!address) {
       return {
@@ -104,7 +107,9 @@ const handler: Handler = async (event) => {
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Failed to fetch wallet data' }),
+      body: JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Failed to fetch wallet data' 
+      }),
     };
   }
 };
