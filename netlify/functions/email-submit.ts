@@ -64,11 +64,20 @@ const handler: Handler = async (event) => {
     }
 
     // Store the submission
-    const store = getStore('user-details');
-    await store.set(submission.address.toLowerCase(), JSON.stringify({
-      email: submission.email,
-      timestamp: new Date().toISOString()
-    }));
+    const store = getStore('user-details', {
+      siteID: '1ceab40b-f6e1-4dcc-ab15-21f2af2fd7e2',
+      token: process.env.NETLIFY_ACCESS_TOKEN || ''
+    });
+
+    try {
+      await store.set(submission.address.toLowerCase(), JSON.stringify({
+        email: submission.email,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (err) {
+      console.error('Error writing to store:', err);
+      throw new Error('Failed to save email. Please try again.');
+    }
 
     return {
       statusCode: 200,

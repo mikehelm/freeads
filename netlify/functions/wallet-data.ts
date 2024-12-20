@@ -79,19 +79,31 @@ const handler: Handler = async (event) => {
     const nodeData = NODE_DATA[address] || { owned: 0, sold: 0 };
 
     // Get user details from KV store
-    const store = getStore('user-details');
-    const userDetailsStr = await store.get(address);
-    const userDetails = userDetailsStr ? JSON.parse(userDetailsStr as string) : {};
+    const store = getStore('user-details', {
+      siteID: '1ceab40b-f6e1-4dcc-ab15-21f2af2fd7e2',
+      token: process.env.NETLIFY_ACCESS_TOKEN || ''
+    });
+    
+    let userDetails = {};
+    try {
+      const userDetailsStr = await store.get(address);
+      if (userDetailsStr) {
+        userDetails = JSON.parse(userDetailsStr as string);
+      }
+    } catch (err) {
+      console.error('Error reading from store:', err);
+      // Continue with empty user details
+    }
 
     const responseData: WalletData = {
       id: address,
       address: address,
       nodes: nodeData.owned,
-      email: userDetails.email || '',
+      email: userDetails?.email || '',
       level: 1,
       flipit: {
         nodes: nodeData.sold,
-        email: userDetails.email || ''
+        email: userDetails?.email || ''
       }
     };
 
