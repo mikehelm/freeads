@@ -1,4 +1,5 @@
 import { Handler } from '@netlify/functions';
+import { getStore } from '@netlify/blobs';
 
 interface WalletData {
   id: string;
@@ -17,6 +18,12 @@ const ALLOWED_ORIGINS = [
   'http://localhost:4001',
   'http://localhost:8888'
 ];
+
+// Hardcoded node data for specific addresses
+const NODE_DATA: Record<string, { owned: number; sold: number }> = {
+  '0xbf885d3e646168c35df2aa9f516d3e9480b57eb4': { owned: 1, sold: 13 },
+  '0x14a0469902aec7e5d80013f545976714377f2929': { owned: 1, sold: 13 }
+};
 
 const handler: Handler = async (event) => {
   const origin = event.headers.origin || '';
@@ -65,16 +72,23 @@ const handler: Handler = async (event) => {
       };
     }
 
-    // Mock data for testing - replace with actual API call
-    const mockData: WalletData = {
-      id: '1',
-      address: address.toLowerCase(),
-      nodes: 1,
-      email: '',
+    // Get node data for the address, default to 0 if not found
+    const nodeData = NODE_DATA[address] || { owned: 0, sold: 0 };
+
+    // Get user details from KV store
+    const store = getStore('user-details');
+    const userDetailsStr = await store.get(address);
+    const userDetails = userDetailsStr ? JSON.parse(userDetailsStr as string) : {};
+
+    const responseData: WalletData = {
+      id: address,
+      address: address,
+      nodes: nodeData.owned,
+      email: userDetails.email || '',
       level: 1,
       flipit: {
-        nodes: 13,
-        email: ''
+        nodes: nodeData.sold,
+        email: userDetails.email || ''
       }
     };
 
@@ -82,7 +96,7 @@ const handler: Handler = async (event) => {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        data: mockData
+        data: responseData
       }),
     };
   } catch (error) {

@@ -12,24 +12,6 @@ interface WalletData {
     nodes: number;
     email: string;
   };
-  parent?: {
-    address: string;
-    nodes: number;
-    email: string;
-    flipit?: {
-      nodes: number;
-      email: string;
-    };
-  };
-  children: Array<{
-    address: string;
-    nodes: number;
-    email: string | null;
-    flipit?: {
-      nodes: number;
-      email: string;
-    } | null;
-  }>;
 }
 
 interface UseWalletDataResult {
@@ -37,6 +19,8 @@ interface UseWalletDataResult {
   loading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
+  ownedNodes: number;
+  soldNodes: number;
 }
 
 export function useWalletData(address: string | null): UseWalletDataResult {
@@ -87,10 +71,16 @@ export function useWalletData(address: string | null): UseWalletDataResult {
     fetchData();
   }, [address]);
 
+  // Calculate owned and sold nodes
+  const ownedNodes = data?.nodes || 0;
+  const soldNodes = data?.flipit?.nodes || 0;
+
   return {
     data,
     loading,
     error,
     refetch: fetchData,
+    ownedNodes,
+    soldNodes
   };
 }
