@@ -15,9 +15,25 @@ export async function createServer() {
   const app = express();
   const PORT = 4000;
 
-  // Enable CORS and JSON parsing
-  app.use(cors());
+  // Enable CORS with specific options
+  app.use(cors({
+    origin: ['http://localhost:4001', 'http://localhost:4000'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+  }));
+
+  // Enable JSON parsing
   app.use(express.json());
+
+  // Log all incoming requests
+  app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`, {
+      headers: req.headers,
+      body: req.body
+    });
+    next();
+  });
 
   // API routes
   app.use(updateUserDetailsRoute);  // Mount at root since route already includes /api prefix

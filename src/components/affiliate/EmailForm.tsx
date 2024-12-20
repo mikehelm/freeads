@@ -7,17 +7,20 @@ interface EmailFormProps {
   setEmail: (email: string) => void;
   error: string;
   isLoading: boolean;
-  handleSubmit: (e: React.FormEvent) => void;
-  emailInputRef: React.RefObject<HTMLInputElement>;
+  onSubmit: (e: React.FormEvent) => void;
+  inputRef: React.RefObject<HTMLInputElement>;
 }
 
-export function EmailForm({ email, setEmail, error, isLoading, handleSubmit, emailInputRef }: EmailFormProps) {
+export function EmailForm({ email, setEmail, error, isLoading, onSubmit, inputRef }: EmailFormProps) {
   return (
-    <form onSubmit={handleSubmit} className="w-full space-y-6">
-      <div>
-        <div className="relative">
+    <form onSubmit={onSubmit} className="w-full space-y-6">
+      <div className="space-y-4">
+        {error && (
+          <p className="text-red-500 text-sm">{error}</p>
+        )}
+        <div>
           <input
-            ref={emailInputRef}
+            ref={inputRef}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -30,15 +33,10 @@ export function EmailForm({ email, setEmail, error, isLoading, handleSubmit, ema
               transition-colors duration-200
             `}
           />
-          {error && (
-            <p className="absolute -bottom-6 left-0 text-red-500 text-sm">
-              {error}
-            </p>
-          )}
+          <p className="mt-2 text-sm text-text-muted">
+            Use the one that you use for your Flipit Account
+          </p>
         </div>
-        <p className="mt-2 text-sm text-text-muted">
-          Use the one that you use for your Flipit Account
-        </p>
       </div>
       <Button
         type="submit"

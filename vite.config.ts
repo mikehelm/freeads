@@ -19,14 +19,13 @@ export default defineConfig({
   },
   server: {
     port: 4001,
-    strictPort: true,  // This forces Vite to use exactly port 4001
     proxy: {
       '/api': {
         target: 'http://localhost:4000',
         changeOrigin: true,
         secure: false
       }
-    },
+    }
   },
   resolve: {
     alias: {

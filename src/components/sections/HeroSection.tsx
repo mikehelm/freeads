@@ -5,6 +5,7 @@ import { AffiliateForm } from '../AffiliateForm';
 import { logger } from '../../utils/logger';
 import { cn } from '../../utils/cn';
 import coinBackground from '../../assets/coins-Flipit-ADS.png';
+import { StatusSummary } from '../StatusSummary';
 
 const OWNED_NODE_CREDIT = 1000; // $1000 per owned node
 const SOLD_NODE_CREDIT = 500;   // $500 per sold node
@@ -108,7 +109,7 @@ export function HeroSection() {
         <div id="free-ads" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-12 py-16">
             <div className={cn(
-              "flex-1 text-center lg:text-left lg:pl-8 xl:pl-0",
+              "flex-1 pl-8",
               isPoweringDown && "animate-power-down",
               !address && isConnected && "animate-power-up"
             )}>
@@ -124,25 +125,10 @@ export function HeroSection() {
                   </p>
                 </>
               ) : (
-                <>
-                  <p className="text-text-muted text-lg sm:text-xl mb-4">
-                    You own {getNodeText(ownedNodes, 'node')} and have sold {getNodeText(soldNodes, 'node')}
-                  </p>
-                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
-                    <span className="animate-gradient-text">Congratulations</span>
-                    <br />
-                    Node Owner
-                  </h1>
-                  <div className="space-y-4">
-                    <p className="text-2xl font-bold text-accent-orange">
-                      Total Ad Credits: {formatCredits(totalCredits)}
-                    </p>
-                    <div className="text-sm text-text-muted space-y-1">
-                      <p>• Owned nodes: {ownedNodes} × {formatCredits(OWNED_NODE_CREDIT)} per node</p>
-                      <p>• Sold nodes: {soldNodes} × {formatCredits(SOLD_NODE_CREDIT)} per node</p>
-                    </div>
-                  </div>
-                </>
+                <StatusSummary 
+                  ownedNodes={ownedNodes}
+                  soldNodes={soldNodes}
+                />
               )}
             </div>
 

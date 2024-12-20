@@ -4,11 +4,13 @@ import { StepIndicator } from './StepIndicator';
 import { WalletStep } from './affiliate/WalletStep';
 import { EmailForm } from './affiliate/EmailForm';
 import { SuccessMessage } from './affiliate/SuccessMessage';
+import { NameCollectionForm } from './affiliate/NameCollectionForm';
 import { config } from '../config';
 
 const STEPS = [
   { number: 1, label: 'Connect' },
-  { number: 2, label: 'Email' }
+  { number: 2, label: 'Email' },
+  { number: 3, label: 'Profile' }
 ];
 
 export function AffiliateForm() {
@@ -18,21 +20,20 @@ export function AffiliateForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showStepTwo, setShowStepTwo] = useState(false);
+  const [showStepThree, setShowStepThree] = useState(false);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const { address } = useWallet();
 
   useEffect(() => {
-    // Only advance to step 2 if we have a valid address
     if (address && currentStep === 1) {
-      console.log('Valid address detected, advancing to step 2:', address);
       setCurrentStep(2);
     } else if (!address && currentStep !== 1) {
-      console.log('No address detected, reverting to step 1');
       setCurrentStep(1);
       setEmail('');
       setError('');
       setIsSubmitted(false);
       setShowStepTwo(false);
+      setShowStepThree(false);
     }
   }, [address, currentStep]);
 
@@ -44,6 +45,12 @@ export function AffiliateForm() {
       }
     } else {
       setShowStepTwo(false);
+    }
+
+    if (currentStep === 3) {
+      setShowStepThree(true);
+    } else {
+      setShowStepThree(false);
     }
   }, [currentStep]);
 
@@ -59,7 +66,7 @@ export function AffiliateForm() {
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -90,7 +97,7 @@ export function AffiliateForm() {
         throw new Error('Failed to save email');
       }
 
-      setIsSubmitted(true);
+      setCurrentStep(3);
     } catch (error) {
       console.error('Failed to save email:', error);
       setError(error instanceof Error ? error.message : 'Failed to save your email. Please try again.');
@@ -99,39 +106,76 @@ export function AffiliateForm() {
     }
   };
 
+  const handleNameSubmit = async (firstName: string, lastName: string, country: string) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${config.apiBaseUrl}/api/user-details`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          wallet: address?.toLowerCase(),
+          firstName,
+          lastName,
+          country
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to save profile');
+      }
+
+      if (!data.success) {
+        throw new Error('Failed to save profile');
+      }
+
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error('Failed to save profile:', error);
+      setError(error instanceof Error ? error.message : 'Failed to save your profile. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep(2);
+    setShowStepThree(false);
+  };
+
   if (isSubmitted) {
     return <SuccessMessage />;
   }
 
   return (
-    <div className="relative">
-      <div className="gradient-border bg-background-secondary/80 backdrop-blur-lg p-10 rounded-lg">
-        <StepIndicator currentStep={currentStep} steps={STEPS} />
+    <div className="w-full max-w-4xl mx-auto">
+      {currentStep < 3 && <StepIndicator steps={STEPS} currentStep={currentStep} />}
+      
+      <div className={`mt-8 ${currentStep === 3 ? 'mt-12' : ''}`}>
+        {currentStep === 1 && (
+          <WalletStep />
+        )}
 
-        <div className="flex flex-col items-start mb-8 mt-4">
-          <h3 className={`leading-[1.3] font-semibold ${currentStep === 2 ? 'text-2xl' : 'text-[32px]'}`}>
-            {currentStep === 1 
-              ? (address ? 'Ready to Continue' : 'Connect Your Wallet')
-              : 'Enter your email address to claim your credits'}
-          </h3>
-          {currentStep === 1 && !address && (
-            <p className="text-text-muted text-lg mt-2">Select the Wallet Linked to Your Flipit Affiliate Sales</p>
-          )}
-        </div>
+        {showStepTwo && (
+          <EmailForm
+            email={email}
+            setEmail={setEmail}
+            error={error}
+            isLoading={isLoading}
+            onSubmit={handleEmailSubmit}
+            inputRef={emailInputRef}
+          />
+        )}
 
-        {currentStep === 1 ? (
-          <WalletStep address={address} />
-        ) : (
-          <div className={`transition-all duration-500 ${showStepTwo ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-4'}`}>
-            <EmailForm
-              email={email}
-              setEmail={setEmail}
-              error={error}
-              isLoading={isLoading}
-              handleSubmit={handleSubmit}
-              emailInputRef={emailInputRef}
-            />
-          </div>
+        {showStepThree && (
+          <NameCollectionForm
+            onSubmit={handleNameSubmit}
+            wallet={address || ''}
+            onBack={handleBack}
+          />
         )}
       </div>
     </div>

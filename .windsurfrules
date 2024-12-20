@@ -6,6 +6,6 @@ Use http://localhost:4000/ to run the back end
 Use http://localhost:4001/ to run the front end
 If I say "go" it means disable and restart the servers that had changes
 
-Provide the server links as clickable links
+Always provide the server links as clickable links
 
 Careful to not kill services that are needed by Windsurf
