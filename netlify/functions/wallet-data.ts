@@ -1,4 +1,5 @@
 import { Handler } from '@netlify/functions';
+import { getStore } from '@netlify/blobs';
 
 interface WalletData {
   id: string;
@@ -11,6 +12,13 @@ interface WalletData {
     email: string;
   };
 }
+
+const WALLET_DATA = {
+  // Add your wallet addresses and their corresponding node counts here
+  '0xbf885d3e646168c35df2aa9f516d3e9480b57eb4': { owned: 1, sold: 13 },
+  '0x14a0469902aec7e5d80013f545976714377f2929': { owned: 1, sold: 13 },
+  // Add more wallets as needed
+};
 
 const handler: Handler = async (event) => {
   // Enable CORS
@@ -38,7 +46,7 @@ const handler: Handler = async (event) => {
   }
 
   try {
-    const address = event.path.split('/').pop();
+    const address = event.path.split('/').pop()?.toLowerCase();
     
     if (!address) {
       return {
@@ -48,16 +56,23 @@ const handler: Handler = async (event) => {
       };
     }
 
-    // Mock data for testing - replace with actual API call
-    const mockData: WalletData = {
-      id: '1',
-      address: address.toLowerCase(),
-      nodes: 1,
-      email: '',
+    // Get wallet data from our mapping
+    const walletInfo = WALLET_DATA[address] || { owned: 0, sold: 0 };
+
+    // Get user details from KV store
+    const store = getStore('user-details');
+    const userDetailsStr = await store.get(address);
+    const userDetails = userDetailsStr ? JSON.parse(userDetailsStr as string) : {};
+
+    const responseData: WalletData = {
+      id: address,
+      address: address,
+      nodes: walletInfo.owned,
+      email: userDetails.email || '',
       level: 1,
       flipit: {
-        nodes: 13,
-        email: ''
+        nodes: walletInfo.sold,
+        email: userDetails.email || ''
       }
     };
 
@@ -67,7 +82,7 @@ const handler: Handler = async (event) => {
       body: JSON.stringify({
         code: 200,
         status: 1,
-        data: mockData
+        data: responseData
       }),
     };
   } catch (error) {
