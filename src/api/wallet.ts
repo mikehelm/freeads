@@ -1,51 +1,37 @@
-import { logger } from '../utils/logger';
+import { WalletData } from '../types/wallet';
+import { apiClient } from './client';
 
-interface WalletData {
-  id: string;
+// Base URL for API requests
+const API_BASE_URL = import.meta.env.DEV 
+  ? 'http://localhost:4001/.netlify/functions'
+  : '/.netlify/functions';
+
+export interface UpdateWalletRequest {
   address: string;
-  nodes: number;
-  email: string;
-  level: number;
-  flipit?: {
-    nodes: number;
-    email: string;
-  };
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  nickName?: string;
+  country?: string;
 }
 
-interface WalletDataResponse {
-  data: WalletData;
+export async function getWalletDetails(address: string): Promise<WalletData> {
+  return apiClient<WalletData>(`/wallet/${address}`);
 }
 
-// In development, we use the relative path since it's proxied by Vite
-const API_BASE_URL = '/.netlify/functions';
+export async function updateWalletDetails(data: UpdateWalletRequest): Promise<WalletData> {
+  return apiClient<WalletData>('/wallet/update', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
 
-export const fetchWalletData = async (address: string): Promise<WalletData> => {
+export async function getWalletTransactions(address: string): Promise<WalletData> {
+  return apiClient<WalletData>(`/wallet/${address}/transactions`);
+}
+
+export async function submitEmail(email: string, address: string): Promise<void> {
   try {
-    logger.log('info', 'Fetching wallet data', { address });
-    const response = await fetch(`${API_BASE_URL}/wallet-data/${address}`);
-    
-    if (!response.ok) {
-      const error = await response.text();
-      logger.log('error', 'Failed to fetch wallet data', { 
-        status: response.status, 
-        statusText: response.statusText,
-        error 
-      });
-      throw new Error(error || `Failed to fetch wallet data: ${response.status} ${response.statusText}`);
-    }
-
-    const data: WalletDataResponse = await response.json();
-    logger.log('success', 'Wallet data fetched successfully', data);
-    return data.data;
-  } catch (error) {
-    logger.log('error', 'Error fetching wallet data', error);
-    throw error;
-  }
-};
-
-export const submitEmail = async (email: string, address: string): Promise<void> => {
-  try {
-    logger.log('info', 'Submitting email', { email, address });
     const response = await fetch(`${API_BASE_URL}/email-submit`, {
       method: 'POST',
       headers: {
@@ -54,19 +40,13 @@ export const submitEmail = async (email: string, address: string): Promise<void>
       body: JSON.stringify({ email, address }),
     });
 
-    if (!response.ok) {
-      const error = await response.text();
-      logger.log('error', 'Failed to submit email', { 
-        status: response.status, 
-        statusText: response.statusText,
-        error 
-      });
-      throw new Error(error || `Failed to submit email: ${response.status} ${response.statusText}`);
-    }
+    const data = await response.json();
 
-    logger.log('success', 'Email submitted successfully');
+    if (!response.ok || data.error) {
+      throw new Error(data.error?.message || `Failed to submit email: ${response.status}`);
+    }
   } catch (error) {
-    logger.log('error', 'Error submitting email', error);
+    console.error('Error submitting email:', error);
     throw error;
   }
 };

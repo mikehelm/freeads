@@ -3,18 +3,22 @@ import { Loader2, Wallet } from 'lucide-react';
 import { Button } from '../Button';
 import { WalletDisplay } from '../WalletDisplay';
 import { useWallet } from '../../hooks/useWallet';
+import { logger } from '../../utils/logger';
 
 interface WalletStepProps {
-  address: string;
 }
 
-export function WalletStep({ address }: WalletStepProps) {
-  const { connect, isConnecting } = useWallet();
+export function WalletStep() {
+  const { address, connect, isConnecting, error } = useWallet();
 
   const handleConnect = async () => {
-    console.log('Initiating MetaMask connection...');
+    logger.log('info', 'Initiating MetaMask connection...');
     await connect();
   };
+
+  if (error) {
+    logger.log('error', 'Wallet connection error', { error });
+  }
 
   if (!address) {
     return (

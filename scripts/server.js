@@ -1,6 +1,6 @@
-import { spawn } from 'child_process';
-import fs from 'fs';
-import path from 'path';
+const { spawn } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 const PID_FILE = path.join(process.cwd(), '.server-pids.json');
 
@@ -49,28 +49,26 @@ function startProcess(command, args, name) {
 
 function stopProcesses() {
   const pids = loadPids();
-  
   for (const [name, pid] of Object.entries(pids)) {
-    console.log(`Stopping ${name} (PID: ${pid})...`);
     try {
-      process.kill(pid, 'SIGTERM');
+      process.kill(pid);
+      console.log(`Stopped process ${name} (PID: ${pid})`);
     } catch (err) {
-      console.error(`Failed to stop ${name}:`, err.message);
+      console.log(`Failed to stop process ${name} (PID: ${pid}):`, err.message);
     }
   }
-  
   clearPids();
 }
 
 const command = process.argv[2];
 
 if (command === 'start') {
-  // Start both servers
-  startProcess('npm', ['run', 'dev'], 'vite');
-  startProcess('npm', ['run', 'server'], 'backend');
+  // Start both frontend and Netlify Functions
+  startProcess('npm', ['run', 'dev'], 'frontend');
+  startProcess('netlify', ['dev', '--port', '4000'], 'functions');
 } else if (command === 'stop') {
   stopProcesses();
 } else {
-  console.log('Usage: node scripts/server.js [start|stop]');
+  console.error('Invalid command. Use "start" or "stop".');
   process.exit(1);
 }

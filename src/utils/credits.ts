@@ -1,13 +1,10 @@
-import { NodeTransaction } from '../types/transactions';
+import { Transaction } from '../types/transactions';
 
-export function calculateEligibleCredits(transactions: any[]): number {
+export function calculateEligibleCredits(transactions: Transaction[]): number {
   if (!transactions || transactions.length === 0) return 0;
 
   return transactions.reduce((total, tx) => {
-    const price = parseFloat(tx.price);
-    if (isNaN(price)) return total;
-    // Cap credits at $1,000 per node
-    const creditAmount = Math.min(price, 1000);
-    return total + creditAmount;
+    if (tx.type !== 'credit') return total;
+    return total + Math.min(tx.amount, 1000);
   }, 0);
 }

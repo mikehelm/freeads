@@ -6,6 +6,8 @@ import Papa from 'papaparse';
 import { Search, ArrowLeft, Save } from 'lucide-react';
 import { Input } from '../Input';
 import { config } from '../../config';
+import { apiClient } from '../../api/client';
+import { toast } from '../../utils/toast';
 
 interface NodeData {
   nick_name: string;
@@ -87,20 +89,16 @@ export function SalesDataTable({ data, initialSearchTerm = '' }: Props) {
   const fetchWalletData = async (wallet: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/wallet/${wallet}/data`);
-      const result = await response.json();
+      const data = await apiClient(`/api/wallet/${wallet}/data`);
+      setApiResponse(data);
       
-      if (result.code === 200) {
-        setApiResponse(result.data);
-        
-        // Calculate owned and sold nodes
-        const owned = result.data.flipit?.nodes || 0;
-        const sold = result.data.children?.reduce((total: number, child: any) => {
-          return total + (child.flipit?.nodes || 0);
-        }, 0) || 0;
-        
-        setNodeStats({ owned, sold });
-      }
+      // Calculate owned and sold nodes
+      const owned = data.flipit?.nodes || 0;
+      const sold = data.children?.reduce((total: number, child: any) => {
+        return total + (child.flipit?.nodes || 0);
+      }, 0) || 0;
+      
+      setNodeStats({ owned, sold });
     } catch (error) {
       logger.error('Failed to fetch wallet data:', error);
     }
@@ -194,7 +192,6 @@ export function SalesDataTable({ data, initialSearchTerm = '' }: Props) {
     
     setIsSaving(true);
     try {
-      // Send all fields to admin endpoint
       const updates = {
         wallet: searchTerm.toLowerCase(),
         first_name: formData.first_name,
@@ -205,22 +202,17 @@ export function SalesDataTable({ data, initialSearchTerm = '' }: Props) {
 
       console.log('Sending admin updates:', updates);
 
-      const response = await fetch(`${config.apiBaseUrl}/api/admin/update-user`, {
+      await apiClient('/api/admin/update-user', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('Admin update failed:', error);
-        throw new Error(error.error || 'Failed to save');
-      }
-      
       // Clear modified fields after successful save
       setModifiedFields(new Set());
+      toast.success('Changes saved successfully');
     } catch (error) {
-      console.error('Save failed:', error);
+      console.error('Admin update failed:', error);
+      toast.error('Failed to save changes');
     } finally {
       setIsSaving(false);
     }

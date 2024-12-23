@@ -1,80 +1,54 @@
 import { useState, useEffect } from 'react';
-import { logger } from '../utils/logger';
-import { config } from '../config';
-import { WalletData, WalletDataResponse } from '../types/ethereum';
+import { ApiResponse, WalletData, ApiError } from '../types/api';
+import { fetchWalletData } from '../api/wallet';
 
-interface UseWalletDataResult {
+// In development, we use the proxy set up in vite.config.ts
+const API_BASE_URL = '/.netlify/functions/api';
+
+interface WalletDataState {
   data: WalletData | null;
-  loading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
-  ownedNodes: number;
-  soldNodes: number;
+  error: ApiError | null;
+  isLoading: boolean;
 }
 
-export function useWalletData(address: string | null): UseWalletDataResult {
-  const [data, setData] = useState<WalletData | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<Error | null>(null);
+export const useWalletData = (address: string | null) => {
+  const [state, setState] = useState<WalletDataState>({
+    data: null,
+    error: null,
+    isLoading: false
+  });
 
-  const fetchData = async () => {
+  useEffect(() => {
     if (!address) {
-      setData(null);
+      setState({
+        data: null,
+        error: null,
+        isLoading: false
+      });
       return;
     }
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`${config.apiBaseUrl}/functions/wallet-data/${address}`);
-      const result = await response.json() as WalletDataResponse;
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to fetch wallet data');
-      }
-
-      if (!result.data) {
-        throw new Error('No data received from API');
-      }
-
-      // Type guard for required fields
-      const requiredFields: Array<keyof WalletData> = ['id', 'address', 'nodes', 'email', 'level'];
-      for (const field of requiredFields) {
-        if (!(field in result.data)) {
-          throw new Error(`Missing required field: ${field}`);
-        }
-      }
-
-      // Additional type checking for nested flipit data
-      if (result.data.flipit && typeof result.data.flipit.nodes !== 'number') {
-        throw new Error('Invalid flipit nodes data');
-      }
-
-      setData(result.data);
-    } catch (err) {
-      logger.log('error', 'Error fetching wallet data:', err);
-      setError(err instanceof Error ? err : new Error('Unknown error'));
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
+    setState(prev => ({ ...prev, isLoading: true }));
+    
+    fetchWalletData(address)
+      .then(data => {
+        setState({
+          data,
+          error: null,
+          isLoading: false
+        });
+      })
+      .catch(error => {
+        setState({
+          data: null,
+          error: {
+            type: 'API_ERROR',
+            message: error.message || 'Failed to fetch wallet data'
+          },
+          isLoading: false
+        });
+      });
   }, [address]);
 
-  // Safe access to node counts with type checking
-  const ownedNodes = data?.nodes ?? 0;
-  const soldNodes = data?.flipit?.nodes ?? 0;
-
-  return {
-    data,
-    loading,
-    error,
-    refetch: fetchData,
-    ownedNodes,
-    soldNodes
-  };
-}
+  return state;
+};

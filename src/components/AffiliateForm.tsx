@@ -5,6 +5,7 @@ import { WalletStep } from './affiliate/WalletStep';
 import { EmailForm } from './affiliate/EmailForm';
 import { SuccessMessage } from './affiliate/SuccessMessage';
 import { NameCollectionForm } from './affiliate/NameCollectionForm';
+import { apiClient } from '../api/client';
 import { config } from '../config';
 
 const STEPS = [
@@ -76,31 +77,18 @@ export function AffiliateForm() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${config.apiBaseUrl}/api/user-details`, {
+      await apiClient('/api/user-details', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           wallet: address.toLowerCase(),
           email: email,
         }),
       });
 
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to save email');
-      }
-
-      if (!data.success) {
-        throw new Error('Failed to save email');
-      }
-
-      setCurrentStep(3);
-    } catch (error) {
-      console.error('Failed to save email:', error);
-      setError(error instanceof Error ? error.message : 'Failed to save your email. Please try again.');
+      setIsSubmitted(true);
+      setShowStepThree(true);
+    } catch (error: any) {
+      setError(error.message || 'Failed to save email');
     } finally {
       setIsLoading(false);
     }

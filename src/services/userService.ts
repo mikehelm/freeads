@@ -7,9 +7,19 @@ export interface UserDetails {
   last_name?: string;
   email?: string;
   nick_name?: string;
+  country?: string;
+  nodes?: number;
+  flipit?: {
+    nodes: number;
+    email: string;
+  };
 }
 
 class UserService {
+  private readonly API_BASE_URL = process.env.NODE_ENV === 'development' 
+    ? 'http://localhost:4000' 
+    : 'https://api.getfreeads.co';
+
   private async readCSV(filePath: string): Promise<any[]> {
     try {
       const response = await fetch(`/data/users/${filePath}`);
@@ -31,10 +41,25 @@ class UserService {
 
   async getUserDetails(wallet: string): Promise<UserDetails | null> {
     try {
-      const data = await this.readCSV('user_details.csv');
-      return data.find((row: UserDetails) => 
-        row.wallet?.toLowerCase() === wallet?.toLowerCase()
-      ) || null;
+      const response = await fetch(`${this.API_BASE_URL}/api/wallet/${wallet}`);
+      
+      if (!response.ok) {
+        const error = await response.json();
+        logger.log('error', 'API error', error);
+        return null;
+      }
+
+      const data = await response.json();
+      return {
+        wallet: data.address,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        email: data.email,
+        nick_name: data.nickName,
+        country: data.country,
+        nodes: data.nodes,
+        flipit: data.flipit
+      };
     } catch (error) {
       logger.log('error', 'Failed to get user details', error);
       return null;
@@ -48,33 +73,23 @@ class UserService {
         email: details.email 
       });
       
-      const requestBody = JSON.stringify(details);
-      logger.log('info', 'Request body', { requestBody });
-      
-      const response = await fetch('/api/update-user-details', {
-        method: 'POST',
+      const response = await fetch(`${this.API_BASE_URL}/api/wallet/${details.wallet}`, {
+        method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: requestBody,
-      });
-
-      logger.log('info', 'Response status', { 
-        status: response.status,
-        ok: response.ok 
+        body: JSON.stringify({
+          firstName: details.first_name,
+          lastName: details.last_name,
+          email: details.email,
+          nickName: details.nick_name,
+          country: details.country
+        })
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        logger.log('error', 'Server returned error', errorData);
-        throw new Error(errorData.error || 'Failed to update user details');
-      }
-
-      const data = await response.json();
-      logger.log('info', 'Server response', data);
-
-      if (!data.success) {
-        throw new Error('Failed to update user details');
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update user details');
       }
     } catch (error) {
       logger.log('error', 'Failed to update user details', error);

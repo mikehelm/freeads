@@ -3,6 +3,8 @@ import { Button } from './Button';
 import { Input } from './Input';
 import { logger } from '../utils/logger';
 import { userService } from '../services/userService';
+import { validateEmail } from '../types/wallet';
+import { validateAddress } from '../utils/address';
 
 interface UserDetailsFormProps {
   wallet: string;
@@ -13,11 +15,35 @@ export function UserDetailsForm({ wallet, onSuccess }: UserDetailsFormProps) {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [walletError, setWalletError] = useState('');
+
+  const validateForm = (): boolean => {
+    let isValid = true;
+    setEmailError('');
+    setWalletError('');
+
+    if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      isValid = false;
+    }
+
+    if (!validateAddress(wallet)) {
+      setWalletError('Invalid wallet address format');
+      isValid = false;
+    }
+
+    return isValid;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!wallet) {
       setError('No wallet address available');
+      return;
+    }
+
+    if (!validateForm()) {
       return;
     }
 
@@ -43,6 +69,14 @@ export function UserDetailsForm({ wallet, onSuccess }: UserDetailsFormProps) {
     }
   };
 
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    if (emailError && validateEmail(newEmail)) {
+      setEmailError('');
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
@@ -50,22 +84,28 @@ export function UserDetailsForm({ wallet, onSuccess }: UserDetailsFormProps) {
           <span className="text-sm text-text-muted">Wallet Address:</span>
           <span className="text-sm font-mono ml-2">{wallet}</span>
         </div>
+        {walletError && <p className="text-red-500 text-sm mt-1">{walletError}</p>}
+      </div>
+
+      <div>
         <Input
           type="email"
-          placeholder="Enter your email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="bg-background-secondary border-accent-blue/20"
+          onChange={handleEmailChange}
+          placeholder="Enter your email"
+          disabled={isSubmitting}
+          error={emailError}
         />
       </div>
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+
+      {error && <p className="text-red-500">{error}</p>}
+
       <Button
         type="submit"
-        disabled={isSubmitting || !wallet}
-        className="w-full bg-accent-blue hover:bg-accent-blue/90 text-white"
+        disabled={isSubmitting}
+        loading={isSubmitting}
       >
-        {isSubmitting ? 'Saving...' : 'Save Details'}
+        Save Details
       </Button>
     </form>
   );

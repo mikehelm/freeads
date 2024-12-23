@@ -1,4 +1,19 @@
-import fs from 'fs';
+docs/
+├── README.md           # Documentation overview
+├── api/               # API specifications
+├── guides/            # Implementation guides
+│   └── frontend.md    # Frontend guide
+└── development/       # Development docsdocs/
+├── README.md           # Documentation overview
+├── api/               # API specifications
+├── guides/            # Implementation guides
+│   └── frontend.md    # Frontend guide
+└── development/       # Development docsdocs/
+├── README.md           # Documentation overview
+├── api/               # API specifications
+├── guides/            # Implementation guides
+│   └── frontend.md    # Frontend guide
+└── development/       # Development docsimport fs from 'fs';
 import path from 'path';
 import Papa from 'papaparse';
 import { logger } from '../utils/logger';

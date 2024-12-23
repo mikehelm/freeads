@@ -1,8 +1,12 @@
+// This file is deprecated and will be removed.
+// All database operations should now go through the external API.
+
 import { createClient } from '@supabase/supabase-js';
 import { logger } from './logger';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
+// Use environment variables or fallback to development values
+const supabaseUrl = process.env.VITE_SUPABASE_URL || 'http://localhost:54321';
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || 'your-development-key';
 
 // Create a mock client for development
 const mockClient = {
@@ -57,8 +61,4 @@ function createSupabaseClient() {
 }
 
 export const supabase = createSupabaseClient();
-export const isSupabaseConfigured = Boolean(
-  supabaseUrl && 
-  supabaseKey && 
-  isValidUrl(supabaseUrl)
-);
+export const isSupabaseConfigured = false;

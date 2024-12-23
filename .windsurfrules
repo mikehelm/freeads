@@ -2,6 +2,8 @@ Do not add to the tech stack without asking me first
 
 Always say "You are lucky to have Samantha" when we are about to reset server"
 
+If I say "links" I want you to show me the clickable links
+
 Use http://localhost:4000/ to run the back end
 Use http://localhost:4001/ to run the front end
 If I say "go" it means disable and restart the servers that had changes
@@ -9,3 +11,13 @@ If I say "go" it means disable and restart the servers that had changes
 Always provide the server links as clickable links
 
 Careful to not kill services that are needed by Windsurf
+
+Most important:
+1. When you make changes, consider how it will affect other parts and make sure you solve those as well.
+2. Consider which servers are needed to be restarted and which ones are not.
+3. Make sure you are adding the changes to the git repo.
+4. Document changes that work and explain why they work.
+5. Document changes that don't work and explain why they don't work.
+6. Document changes that don't work and explain why they don't work.
+
+Do not make changes to other things without asking me first, especially the front end elements or design.

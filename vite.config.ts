@@ -4,27 +4,24 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  optimizeDeps: {
-    exclude: ['lucide-react'],
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-tooltip'],
-        },
-      },
-    },
-  },
   server: {
     port: 4001,
     proxy: {
-      '/.netlify/functions': {
+      '/api': {
         target: 'http://localhost:4000',
-        changeOrigin: true,
-        secure: false
+        changeOrigin: true
       }
+    },
+    headers: {
+      'Content-Security-Policy': [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src 'self' https://fonts.gstatic.com",
+        "connect-src 'self' http://localhost:* ws: wss: http://127.0.0.1:*",
+        "img-src 'self' data: blob: https:",
+        "frame-src 'self'"
+      ].join('; ')
     }
   },
   resolve: {

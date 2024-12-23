@@ -1,141 +1,90 @@
-import { useState, useEffect, useCallback } from 'react';
-import { connectWallet, disconnectWallet } from '../utils/wallet';
-import { fetchWalletData } from '../api/wallet';
-import { logger } from '../utils/logger';
+import { useState, useEffect } from 'react';
 
-interface UseWalletResult {
-  address: string | null;
-  error: string | null;
-  connect: () => Promise<void>;
-  disconnect: () => Promise<void>;
-  isConnecting: boolean;
-}
-
-export function useWallet(): UseWalletResult {
+export const useWallet = () => {
   const [address, setAddress] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Check for existing connection
+  const checkConnection = async () => {
+    if (typeof window.ethereum !== 'undefined') {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (accounts.length > 0) {
+          setAddress(accounts[0].toLowerCase());
+        } else {
+          setAddress(null);
+        }
+      } catch (err) {
+        console.error('Error checking connection:', err);
+        setAddress(null);
+      }
+    }
+    setIsInitialized(true);
+  };
+
   useEffect(() => {
-    if (typeof window === 'undefined' || !window.ethereum) {
-      logger.log('error', 'MetaMask not available');
+    checkConnection();
+    
+    if (typeof window.ethereum !== 'undefined') {
+      const handleAccountsChanged = (accounts: string[]) => {
+        if (accounts.length > 0) {
+          setAddress(accounts[0].toLowerCase());
+        } else {
+          setAddress(null);
+        }
+      };
+
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+
+      return () => {
+        if (window.ethereum?.removeListener) {
+          window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        }
+      };
+    }
+  }, []);
+
+  const connect = async () => {
+    if (typeof window.ethereum === 'undefined') {
+      setError('MetaMask is not installed');
       return;
     }
 
-    // Log MetaMask details
-    logger.log('info', 'MetaMask details', {
-      version: window.ethereum.version,
-      chainId: window.ethereum.chainId,
-      isMetaMask: window.ethereum.isMetaMask,
-      isConnected: window.ethereum.isConnected?.()
-    });
-
-    // Check if already connected
-    window.ethereum.request({ method: 'eth_accounts' })
-      .then(async accounts => {
-        if (accounts && accounts.length > 0) {
-          const addr = accounts[0].toLowerCase();
-          setAddress(addr);
-          logger.log('info', 'Found existing connection', { address: addr });
-          
-          // Fetch wallet data for existing connection
-          try {
-            await fetchWalletData(addr);
-          } catch (err) {
-            logger.log('error', 'Error fetching wallet data for existing connection', err);
-          }
-        }
-      })
-      .catch(err => {
-        logger.log('error', 'Error checking existing connection', err);
-      });
-
-    // Listen for account changes
-    const handleAccountsChanged = async (accounts: string[]) => {
-      logger.log('info', 'Accounts changed', { accounts });
-      if (accounts.length === 0) {
-        setAddress(null);
-        setError('Wallet disconnected');
-      } else {
-        const addr = accounts[0].toLowerCase();
-        setAddress(addr);
-        setError(null);
-        
-        // Fetch wallet data when account changes
-        try {
-          await fetchWalletData(addr);
-        } catch (err) {
-          logger.log('error', 'Error fetching wallet data after account change', err);
-        }
-      }
-    };
-
-    // Listen for chain changes
-    const handleChainChanged = (chainId: string) => {
-      logger.log('info', 'Chain changed', { chainId });
-      window.location.reload();
-    };
-
-    window.ethereum.on('accountsChanged', handleAccountsChanged);
-    window.ethereum.on('chainChanged', handleChainChanged);
-
-    return () => {
-      window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-      window.ethereum.removeListener('chainChanged', handleChainChanged);
-    };
-  }, []);
-
-  const connect = useCallback(async () => {
     setIsConnecting(true);
     setError(null);
 
     try {
-      logger.log('info', 'Attempting to connect wallet');
-      const result = await connectWallet();
-
-      if (result.error) {
-        setError(result.error);
-        logger.log('error', 'Connection error', { error: result.error });
-      } else if (result.address) {
-        setAddress(result.address);
-        logger.log('success', 'Wallet connected', { address: result.address });
-        
-        // Fetch wallet data after successful connection
-        try {
-          await fetchWalletData(result.address);
-        } catch (err) {
-          logger.log('error', 'Error fetching wallet data after connection', err);
-        }
+      console.log('Requesting accounts...');
+      const accounts = await window.ethereum.request({ 
+        method: 'eth_requestAccounts' 
+      });
+      
+      if (accounts.length > 0) {
+        console.log('Account connected:', accounts[0]);
+        setAddress(accounts[0].toLowerCase());
+      } else {
+        throw new Error('No accounts returned');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error connecting wallet';
-      setError(errorMessage);
-      logger.log('error', 'Unexpected error connecting wallet', err);
+      console.error('Error connecting:', err);
+      setError(err instanceof Error ? err.message : 'Failed to connect wallet');
     } finally {
       setIsConnecting(false);
     }
-  }, []);
+  };
 
-  const disconnect = useCallback(async () => {
-    try {
-      logger.log('info', 'Attempting to disconnect wallet');
-      await disconnectWallet();
-      setAddress(null);
-      setError(null);
-      logger.log('success', 'Wallet disconnected');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error disconnecting wallet';
-      setError(errorMessage);
-      logger.log('error', 'Error disconnecting wallet', err);
-    }
-  }, []);
+  const disconnect = () => {
+    setAddress(null);
+  };
 
   return {
     address,
+    isConnected: !!address,
+    isConnecting,
+    isInitialized,
     error,
     connect,
-    disconnect,
-    isConnecting,
+    disconnect
   };
-}
+};
