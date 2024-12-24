@@ -44,3 +44,27 @@ Look at the code you just wrote and make sure it did not break anything and cons
    - Never kill any process running on ports used by Windsurf/IDE
    - Always verify process ownership before terminating
    - If in doubt, ask the user first
+
+### Server Process Rules
+server_cleanup = true  # Always clean up existing processes before starting new ones
+max_restart_attempts = 3  # Maximum number of restart attempts before requiring manual intervention
+
+# NEVER use broad process killing commands
+# Instead, only target specific ports:
+cleanup_commands = [
+    "kill $(lsof -t -i:3000)",  # Only kill process on frontend port
+]
+
+# Process Safety Rules
+process_safety = {
+    "check_before_kill": true,  # Always check what's running first
+    "protected_services": ["windsurf"],  # Never kill these services
+    "kill_strategy": "port-specific"  # Only kill processes on specific ports
+}
+
+# Steps for Safe Process Management:
+1. Check running processes: lsof -i :3000
+2. Verify no protected services affected
+3. Kill only specific port: kill $(lsof -t -i:3000)
+4. Wait for port release
+5. Start new process

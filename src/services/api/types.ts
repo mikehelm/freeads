@@ -1,35 +1,39 @@
-export type ApiErrorType = 
-  | 'NOT_FOUND'
-  | 'INVALID_ADDRESS'
-  | 'DATABASE_ERROR'
-  | 'VALIDATION_ERROR'
-  | 'DUPLICATE_ENTRY'
-  | 'NETWORK_ERROR'
-  | 'UNAUTHORIZED'
-  | 'FORBIDDEN'
-  | 'RATE_LIMIT_EXCEEDED';
-
 export interface ApiError {
-  type: ApiErrorType;
-  message: string;
-  details?: unknown;
+  error: {
+    type: string;
+    message: string;
+    details?: Record<string, any>;
+  }
+}
+
+export interface RateLimitError extends ApiError {
+  error: {
+    type: 'RATE_LIMIT_EXCEEDED';
+    message: string;
+    details: {
+      retryAfter: number;
+      limit: number;
+      remaining: number;
+      resetAt: string;
+    }
+  }
+}
+
+export interface ApiResponse<T> {
+  data: T;
 }
 
 export interface WalletData {
   address: string;
-  firstName?: string;
-  lastName?: string;
   email?: string;
-  nickName?: string;
-  country?: string;
   nodes: number;
-  flipit: {
-    nodes: number;
-    email: string;
-  };
 }
 
-export interface ApiResponse<T> {
-  data?: T;
-  error?: ApiError;
-}
+// Validation patterns from backend
+export const VALIDATION = {
+  ADDRESS_PATTERN: /^0x[a-fA-F0-9]{40}$/,
+  EMAIL_PATTERN: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  validateAddress: (address: string) => VALIDATION.ADDRESS_PATTERN.test(address),
+  validateEmail: (email: string) => VALIDATION.EMAIL_PATTERN.test(email),
+  validateNodes: (nodes: number) => Number.isInteger(nodes) && nodes >= 0
+};
