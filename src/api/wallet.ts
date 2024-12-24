@@ -1,11 +1,6 @@
 import { WalletData } from '../types/wallet';
 import { apiClient } from './client';
 
-// Base URL for API requests
-const API_BASE_URL = import.meta.env.DEV 
-  ? 'http://localhost:4001/.netlify/functions'
-  : '/.netlify/functions';
-
 export interface UpdateWalletRequest {
   address: string;
   email?: string;
@@ -32,7 +27,7 @@ export async function getWalletTransactions(address: string): Promise<WalletData
 
 export async function submitEmail(email: string, address: string): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/email-submit`, {
+    const response = await fetch(`${apiClient.defaults.baseURL}/email-submit`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

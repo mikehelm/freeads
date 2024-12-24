@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
-import { ApiResponse, WalletData, ApiError } from '../types/api';
-import { fetchWalletData } from '../api/wallet';
-
-// In development, we use the proxy set up in vite.config.ts
-const API_BASE_URL = '/.netlify/functions/api';
+import { ApiResponse, WalletData, ApiError } from '../services/api/types';
+import { walletService } from '../services/api/wallet';
 
 interface WalletDataState {
   data: WalletData | null;
@@ -30,25 +27,35 @@ export const useWalletData = (address: string | null) => {
 
     setState(prev => ({ ...prev, isLoading: true }));
     
-    fetchWalletData(address)
-      .then(data => {
+    walletService.getWallet(address)
+      .then((response) => {
+        if (response.error) {
+          setState({
+            data: null,
+            error: response.error,
+            isLoading: false
+          });
+          return;
+        }
+        
         setState({
-          data,
+          data: response.data || null,
           error: null,
           isLoading: false
         });
       })
-      .catch(error => {
+      .catch((error: ApiError) => {
         setState({
           data: null,
-          error: {
-            type: 'API_ERROR',
-            message: error.message || 'Failed to fetch wallet data'
-          },
+          error,
           isLoading: false
         });
       });
   }, [address]);
 
-  return state;
+  return {
+    data: state.data,
+    error: state.error,
+    loading: state.isLoading
+  };
 };

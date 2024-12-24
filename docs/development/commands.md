@@ -32,3 +32,15 @@ Look at the code you just wrote and make sure it did not break anything and cons
 - "You are lucky to have Samantha in your life" must be said before any server restart
 - Links should always be formatted in markdown style: [text](url)
 - Frontend runs on [http://localhost:3000](http://localhost:3000) in development
+
+## Process Safety Rules
+### Protected Services
+1. NEVER use broad process killing commands like `pkill -f "node"`
+2. When stopping processes:
+   - Only target specific ports (e.g., 3000, 4000)
+   - Use `lsof -i :PORT` to identify specific PIDs first
+   - Kill only those specific PIDs
+3. Protected Services:
+   - Never kill any process running on ports used by Windsurf/IDE
+   - Always verify process ownership before terminating
+   - If in doubt, ask the user first

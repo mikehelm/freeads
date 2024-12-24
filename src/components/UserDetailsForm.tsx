@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Button } from './Button';
 import { Input } from './Input';
 import { logger } from '../utils/logger';
-import { userService } from '../services/userService';
+import { walletService } from '../services/api/wallet';
 import { validateEmail } from '../types/wallet';
 import { validateAddress } from '../utils/address';
+import { WalletData } from '../services/api/types';
 
 interface UserDetailsFormProps {
   wallet: string;
@@ -53,17 +54,20 @@ export function UserDetailsForm({ wallet, onSuccess }: UserDetailsFormProps) {
     logger.log('info', 'Submitting form', { wallet, email });
 
     try {
-      await userService.updateUserDetails({
-        wallet: wallet.toLowerCase(), // Ensure consistent case
+      const response = await walletService.updateWallet(wallet.toLowerCase(), {
         email,
       });
+
+      if (response.error) {
+        throw response.error;
+      }
 
       logger.log('info', 'User details saved successfully');
       setEmail(''); // Clear form
       onSuccess?.();
     } catch (err) {
       logger.log('error', 'Failed to save user details', err);
-      setError('Failed to save your details. Please try again.');
+      setError(err.message || 'Failed to save your details. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

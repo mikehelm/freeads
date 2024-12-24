@@ -29,48 +29,36 @@ class Logger {
     this.subscribers.forEach(callback => callback(level, message, data));
   }
 
-  log(type: LogType, message: string, data?: any) {
-    const logEntry = {
+  private addLog(type: LogType, message: string, data?: any) {
+    const entry: LogEntry = {
       timestamp: Date.now(),
       type,
       message,
       data
     };
 
-    this.logs.unshift(logEntry);
-
-    // Keep log size manageable
+    this.logs.push(entry);
     if (this.logs.length > MAX_LOG_SIZE) {
-      this.logs.pop();
+      this.logs.shift();
     }
+  }
 
-    // Always log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      switch (type) {
-        case 'error':
-          console.error(message, data);
-          break;
-        case 'warning':
-          console.warn(message, data);
-          break;
-        case 'info':
-          console.info(message, data);
-          break;
-      }
-    }
+  error(message: string, data?: any) {
+    console.error(message, data);
+    this.addLog('error', message, data);
+    this.notify('error', message, data);
+  }
 
-    // Notify subscribers (debug window)
-    switch (type) {
-      case 'error':
-        this.notify('error', message, data);
-        break;
-      case 'warning':
-        this.notify('warn', message, data);
-        break;
-      case 'info':
-        this.notify('info', message, data);
-        break;
-    }
+  info(message: string, data?: any) {
+    console.info(message, data);
+    this.addLog('info', message, data);
+    this.notify('info', message, data);
+  }
+
+  warning(message: string, data?: any) {
+    console.warn(message, data);
+    this.addLog('warning', message, data);
+    this.notify('warn', message, data);
   }
 
   getRecentLogs(): LogEntry[] {

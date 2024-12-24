@@ -29,9 +29,12 @@ export async function apiClient<T>(
   options: FetchOptions = {},
   retryCount = 0
 ): Promise<T> {
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-  const url = `${baseUrl}${endpoint}`;
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+  const url = `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
   const { skipCache = false, maxRetries = MAX_RETRIES, ...fetchOptions } = options;
+
+  // Debug log the URL being called
+  console.log('Calling API URL:', url);
 
   // Add ETag if available and not skipping cache
   if (!skipCache && etagCache.has(url)) {
