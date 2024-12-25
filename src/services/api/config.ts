@@ -2,13 +2,13 @@ export const API_CONFIG = {
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:4000',
   endpoints: {
     wallet: {
-      get: (address: string) => `/api/wallet/${address}`,
-      create: '/api/wallet',
-      update: (address: string) => `/api/wallet/${address}`,
-      delete: (address: string) => `/api/wallet/${address}`,
+      get: (address: string) => `/wallet/${address.toLowerCase()}`,
+      create: '/wallet',
+      update: (address: string) => `/wallet/${address.toLowerCase()}`,
+      delete: (address: string) => `/wallet/${address.toLowerCase()}`,
     },
-    health: '/api/health',
-    docs: '/api-docs'
+    health: '/health',
+    docs: '/docs'
   },
   headers: {
     common: {

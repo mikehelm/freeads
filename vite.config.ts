@@ -1,52 +1,59 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import path from 'path';
+import { resolve } from 'path';
+import debugPlugin from './vite.debug-plugin';
 
-const isDev = process.env.NODE_ENV !== 'production';
-
-// CSP for development - allows HMR and other dev tools
-const devCSP = [
-  "default-src 'self'",
-  "script-src 'self' 'unsafe-eval' 'unsafe-inline' http://localhost:* http://127.0.0.1:*",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
-  "connect-src 'self' http://localhost:* ws://localhost:* ws://127.0.0.1:* http://127.0.0.1:*",
-  "img-src 'self' data: blob: https:",
-  "frame-src 'self'"
-].join('; ');
-
-// CSP for production - more restrictive
-const prodCSP = [
-  "default-src 'self'",
-  "script-src 'self'",
-  "style-src 'self' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
-  "connect-src 'self'",
-  "img-src 'self' data: https:",
-  "frame-src 'self'"
-].join('; ');
-
-export default defineConfig({
-  plugins: [react()],
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    debugPlugin(),  // Add debug plugin first
+    react()
+  ],
   server: {
     port: 3000,
-    strictPort: true,
-    open: false,
-    host: 'localhost',
-    cors: false,
+    headers: {
+      // Remove empty CSP as it's now handled by debug plugin
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:4000',
-        changeOrigin: true
-      }
-    },
-    headers: {
-      'Content-Security-Policy': isDev ? devCSP : prodCSP
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('proxy error', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('Sending Request:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('Received Response:', proxyRes.statusCode, req.url);
+          });
+        }
+      },
     }
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
+      '@': resolve(__dirname, './src')
+    }
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'esnext',
+      supported: { 
+        'bigint': true 
+      },
+    }
+  },
+  build: {
+    target: 'esnext',
+    rollupOptions: {
+      input: {
+        main: mode === 'development' 
+          ? resolve(__dirname, 'index-dev.html')
+          : resolve(__dirname, 'index.html')
+      }
     }
   }
-});
+}));

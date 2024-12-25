@@ -12,12 +12,12 @@ export function WalletStep() {
   const { address, connect, isConnecting, error } = useWallet();
 
   const handleConnect = async () => {
-    logger.log('info', 'Initiating MetaMask connection...');
+    logger.info('Initiating MetaMask connection...');
     await connect();
   };
 
   if (error) {
-    logger.log('error', 'Wallet connection error', { error });
+    logger.error('Wallet connection error', { error });
   }
 
   if (!address) {

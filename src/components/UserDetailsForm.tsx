@@ -82,7 +82,7 @@ export function UserDetailsForm({ wallet, onSuccess }: UserDetailsFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" id="user-details-form">
       <div>
         <div className="mb-2">
           <span className="text-sm text-text-muted">Wallet Address:</span>
@@ -94,15 +94,19 @@ export function UserDetailsForm({ wallet, onSuccess }: UserDetailsFormProps) {
       <div>
         <Input
           type="email"
+          id="email"
+          name="email"
           value={email}
           onChange={handleEmailChange}
           placeholder="Enter your email"
           disabled={isSubmitting}
           error={emailError}
+          aria-label="Email address"
+          required
         />
       </div>
 
-      {error && <p className="text-red-500">{error}</p>}
+      {error && <p className="text-red-500" role="alert">{error}</p>}
 
       <Button
         type="submit"

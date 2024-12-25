@@ -1,4 +1,16 @@
-# Development Commands
+API Error: {
+  status: 400,
+  statusText: 'Bad Request',
+  data: { ... }
+}API Error: {
+  status: 400,
+  statusText: 'Bad Request',
+  data: { ... }
+}API Error: {
+  status: 400,
+  statusText: 'Bad Request',
+  data: { ... }
+}# Development Commands
 
 ## Available Commands
 
